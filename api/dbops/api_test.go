@@ -55,6 +55,14 @@ func testDeleteUser(t *testing.T) {
 }
 
 // endregion
+func TestVideoWorkFlow(t *testing.T) {
+	clearTables()
+	t.Run("PrepareUser", testAddUser)
+	t.Run("AddVideo", testAddVideoInfo)
+	t.Run("GetVideo", testGetVideoInfo)
+	t.Run("DelVideo", testDeleteVideoInfo)
+	t.Run("RegetVideo", testRegetUser)
+}
 
 // region Video
 func testReagetVideoInfo(t *testing.T) {
@@ -68,7 +76,7 @@ func testReagetVideoInfo(t *testing.T) {
 }
 
 func testGetVideoInfo(t *testing.T) {
-	_,err:=GetVideoInfo("1")
+	_, err := GetVideoInfo("1")
 	if err != nil {
 		t.Errorf("Error of RegetUser: %v", err)
 	}
@@ -81,8 +89,38 @@ func testAddVideoInfo(t *testing.T) {
 	}
 	tempvid = vi.Id
 }
-func testDeleteVideoInfo(t *testing.T) {
 
+func testDeleteVideoInfo(t *testing.T) {
+	err := DeleteVideoInfo("1234")
+	if err != nil {
+		t.Errorf("error of DeleteVideoInfo: %v", err)
+	}
+}
+
+func testAddUser(t *testing.T) {
+	err := AddUserCredential("ces", "123")
+	if err != nil {
+		t.Errorf("Error of RegetUser: %v", err)
+	}
 }
 
 // endregion
+
+func TestComments(t *testing.T) {
+	clearTables()
+	//t.Run("AddUser")
+}
+
+func testAddComments(t *testing.T) {
+	vid := "123"
+	aid := 1
+	content := "test 测试"
+	err := AddNewComments(vid, aid, content)
+	if err != nil {
+		t.Errorf("Error of AddComments: %v", err)
+	}
+}
+
+func TestListComments(t *testing.T) {
+
+}

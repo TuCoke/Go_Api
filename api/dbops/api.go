@@ -2,6 +2,7 @@ package dbops
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"main/api/defs"
@@ -68,8 +69,8 @@ func AddNewVideo(aid int, name string) (*defs.VideoInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	res := &defs.VideoInfo{Id: vid, AuthorId: aid, Name: name, DisplayCtime: ctime}
+	newGuids := fmt.Sprintf("%v", vid)
+	res := &defs.VideoInfo{Id: newGuids, AuthorId: aid, Name: name, DisplayCtime: ctime}
 	defer stmtIns.Close()
 	return res, err
 }
@@ -88,15 +89,58 @@ func GetVideoInfo(vid string) (*defs.VideoInfo, error) {
 	return res, err
 }
 
-func DeleteVideoInfo(vid string)  error{
-	stmtDel,err:=dbConn.Prepare("Delete FROM video_info WHERE id=?")
-	_,err = stmtDel.Exec(vid)
-	if err !=nil{
-		return  err
+func DeleteVideoInfo(vid string) error {
+	stmtDel, err := dbConn.Prepare("Delete FROM video_info WHERE id=?")
+	_, err = stmtDel.Exec(vid)
+	if err != nil {
+		return err
 	}
 	defer stmtDel.Close()
 	return nil
 }
 
-
 //endregion
+
+// region Commtents
+
+func AddNewComments(vid string, aid int, content string) error {
+	id, err := utils.NewUUID()
+	if err != nil {
+		return err
+	}
+	stmtIns, err := dbConn.Prepare("insert into comments(id ,video_id,author_id,content) values(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmtIns.Exec(id, vid, aid, content)
+	if err != nil {
+		return err
+	}
+	defer stmtIns.Close()
+	return nil
+}
+
+func ListComments(vid string, from, to int) ([]*defs.Comment, error) {
+	stmtOut, err := dbConn.Prepare(`SELECT comments.id,user.Login_name,comments.content FROM comments
+        INNER JOIN users ON comments.author_id = users.id
+        where comments.video_id=? and comments.time > FROM_UNIXTIME(?) AND 
+        comments.time <= FROM_UNIXTIME(?)`)
+	var res []*defs.Comment
+	rows, err := stmtOut.Query(vid, from, to)
+	if err != nil {
+		return res, nil
+	}
+	for rows.Next() {
+		var id, name, content string
+		if err := rows.Scan(&id, &name, &content); err != nil {
+			return res, err
+		}
+		c := &defs.Comment{id, vid, name, content}
+		res = append(res, c)
+	}
+	defer stmtOut.Close()
+	return res,nil
+
+}
+
+// endregion
